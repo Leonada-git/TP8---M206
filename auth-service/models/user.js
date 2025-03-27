@@ -1,16 +1,18 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const UserSchema = new mongoose.Schema( {
-    name: { type: String, required: [true, "Username is required"], unique: true },
-    email: { type: String, required: [true, "Email is required"], unique: true, lowercase: true, match: [
-      /^\S+@\S+\.\S+$/, 
-      "Please use a valid email address"
-      ]},
-    password: { type: String, required: [true, "Password is required"], minlength: 6, },
-    role: { type: String, enum: ["membre", "admin", "invite"], default: "membre" },
-    isBlocked: { type: Boolean, default: false },
-  },
-  { timestamps: true }
-);
+const UserSchema = new mongoose.Schema({
+  id: { type: Number, unique: true },  
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  password: { type: String, required: true },
+});
 
-module.exports = mongoose.model("User", UserSchema);
+UserSchema.pre('save', async function (next) {
+  if (this.isNew) {
+    const lastUser = await this.constructor.findOne().sort({ id: -1 });
+    this.id = lastUser ? lastUser.id + 1 : 1;
+  }
+  next();
+});
+
+module.exports = mongoose.model('User', UserSchema);
